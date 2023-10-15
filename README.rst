@@ -109,33 +109,17 @@ the appropriate handler. Thus, the kernel is entered.
 (On Windows) A ``WM_KEYDOWN`` message is sent to the app
 --------------------------------------------------------
 
-The HID transport passes the key down event to the ``KBDHID.sys`` driver which
-converts the HID usage into a scancode. In this case, the scan code is
-``VK_RETURN`` (``0x0D``). The ``KBDHID.sys`` driver interfaces with the
-``KBDCLASS.sys`` (keyboard class driver). This driver is responsible for
-handling all keyboard and keypad input in a secure manner. It then calls into
-``Win32K.sys`` (after potentially passing the message through 3rd party
-keyboard filters that are installed). This all happens in kernel mode.
+When you press a key on your keyboard, it triggers a series of actions behind the scenes:
 
-``Win32K.sys`` figures out what window is the active window through the
-``GetForegroundWindow()`` API. This API provides the window handle of the
-browser's address box. The main Windows "message pump" then calls
-``SendMessage(hWnd, WM_KEYDOWN, VK_RETURN, lParam)``. ``lParam`` is a bitmask
-that indicates further information about the keypress: repeat count (0 in this
-case), the actual scan code (can be OEM dependent, but generally wouldn't be
-for ``VK_RETURN``), whether extended keys (e.g. alt, shift, ctrl) were also
-pressed (they weren't), and some other state.
+HID to Scancode Conversion: The HID transport relays the key event to the KBDHID.sys driver, which translates the key's electronic signal into a scancode. In this case, the scancode is for the "Return" or "Enter" key.
 
-The Windows ``SendMessage`` API is a straightforward function that
-adds the message to a queue for the particular window handle (``hWnd``).
-Later, the main message processing function (called a ``WindowProc``) assigned
-to the ``hWnd`` is called in order to process each message in the queue.
+Handling Keyboard Input Securely: The KBDHID.sys driver communicates with the KBDCLASS.sys driver, responsible for securely managing all keyboard and keypad inputs. It may also interact with other third-party keyboard filters, if any are installed.
 
-The window (``hWnd``) that is active is actually an edit control and the
-``WindowProc`` in this case has a message handler for ``WM_KEYDOWN`` messages.
-This code looks within the 3rd parameter that was passed to ``SendMessage``
-(``wParam``) and, because it is ``VK_RETURN`` knows the user has hit the ENTER
-key.
+Window Identification: Win32K.sys, working in the kernel mode, identifies the active window by using the GetForegroundWindow() API. In this scenario, it detects the web browser's address bar as the active window.
+
+Processing the Key Press: The system sends a message to the window of the active application using the SendMessage API. The message includes details about the key pressed, such as the "Enter" key in this case.
+
+Window Message Handling: The window's message processing function (WindowProc) receives the message and checks for specific instructions related to the "Enter" key. If the active window is an edit control, it understands that the user has pressed the "Enter" key, prompting a specific action, such as submitting a form or executing a command.
 
 (On OS X) A ``KeyDown`` NSEvent is sent to the app
 --------------------------------------------------
@@ -209,20 +193,15 @@ Check HSTS list
 DNS lookup
 ----------
 
-* Browser checks if the domain is in its cache. (to see the DNS Cache in
-  Chrome, go to `chrome://net-internals/#dns <chrome://net-internals/#dns>`_).
-* If not found, the browser calls ``gethostbyname`` library function (varies by
-  OS) to do the lookup.
-* ``gethostbyname`` checks if the hostname can be resolved by reference in the
-  local ``hosts`` file (whose location `varies by OS`_) before trying to
-  resolve the hostname through DNS.
-* If ``gethostbyname`` does not have it cached nor can find it in the ``hosts``
-  file then it makes a request to the DNS server configured in the network
-  stack. This is typically the local router or the ISP's caching DNS server.
-* If the DNS server is on the same subnet the network library follows the
-  ``ARP process`` below for the DNS server.
-* If the DNS server is on a different subnet, the network library follows
-  the ``ARP process`` below for the default gateway IP.
+* Checking the Browser's Cache: The browser initially checks if the domain's information is stored in its cache. You can view the DNS Cache in Chrome by visiting the chrome://net-internals/#dns URL.
+
+Calling the gethostbyname Function: If the information is not found in the cache, the browser calls the gethostbyname library function, which is specific to the operating system (OS), to look up the domain's IP address.
+
+Checking the Local hosts File: Before resorting to DNS, the gethostbyname function checks the local hosts file on the system (the location varies depending on the OS) to see if the hostname can be resolved there.
+
+Requesting the DNS Server: If the domain's IP address is neither in the cache nor the hosts file, the system sends a request to the DNS server configured in the network settings. Typically, this is the local router or the Internet Service Provider's (ISP) caching DNS server.
+
+ARP Process: If the DNS server is on the same network subnet, the system follows the Address Resolution Protocol (ARP) process to locate the DNS server. If it's on a different subnet, the system follows the ARP process for the default gateway IP.
 
 
 ARP process
