@@ -99,14 +99,13 @@ connection, but historically has been over PS/2 or ADB connections.
 Interrupt fires [NOT for USB keyboards]
 ---------------------------------------
 
-The keyboard sends signals on its interrupt request line (IRQ), which is mapped
-to an ``interrupt vector`` (integer) by the interrupt controller. The CPU uses
-the ``Interrupt Descriptor Table`` (IDT) to map the interrupt vectors to
-functions (``interrupt handlers``) which are supplied by the kernel. When an
-interrupt arrives, the CPU indexes the IDT with the interrupt vector and runs
-the appropriate handler. Thus, the kernel is entered.
+Keyboard Signals and IRQs: When you press a key on your keyboard, it sends signals through its Interrupt Request Line (IRQ) to the CPU, essentially letting the CPU know that it requires attention.
 
-(On Windows) A ``WM_KEYDOWN`` message is sent to the app
+Mapping to Interrupt Vectors: These signals are then mapped to specific "interrupt vectors," which are essentially integer values. An interrupt controller typically handles this mapping.
+
+The Interrupt Descriptor Table (IDT): The CPU utilizes the Interrupt Descriptor Table (IDT) to associate the interrupt vectors with specific functions known as "interrupt handlers." These handlers are crucial pieces of code provided by the kernel, the heart of the operating system.
+
+Processing the Interrupt: Upon receiving an interrupt, the CPU refers to the interrupt vector to locate the corresponding interrupt handler in the IDT. It then executes this handler. This effectively means that the kernel is accessed, and its services are employed to manage the interrupt and any related tasks. On the Windows operating system, a specific message called WM_KEYDOWN is sent to the corresponding application.
 --------------------------------------------------------
 
 When you press a key on your keyboard, it triggers a series of actions behind the scenes:
